@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    env_file: .env
+    command: server --console-address ":${MINIO_CONSOLE_PORT}" --address ":${MINIO_PORT}" /data
+    ports:
+      - "${MINIO_PORT}:${MINIO_PORT}"
+      - "${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}"
+    volumes:
+      - ${MINIO_DATA_DIR}:/data
+      - ${MINIO_CONFIG_DIR}:/root/.minio
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_BROWSER_REDIRECT_URL=${MINIO_BROWSER_REDIRECT_URL}
+      - MINIO_SERVER_URL=${MINIO_SERVER_URL}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${MINIO_PORT}/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  nginx:
+    image: nginx:latest
+    container_name: minio-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HTTP_PORT}:80"
+      - "${NGINX_HTTPS_PORT}:443"
+    volumes:
+      - ${NGINX_CONFIG_FILE}:/etc/nginx/nginx.conf:ro
+      - ${NGINX_CERTS_DIR}:/etc/nginx/certs:ro
+    depends_on:
+      - minio
+
+networks:
+  default:
+    name: minio-network
