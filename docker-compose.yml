@@ -24,10 +24,10 @@ services:
       - MINIO_SERVER_URL=${MINIO_SERVER_URL}
 
     healthcheck:
-      test: [ "CMD", "wget", "--quiet", "--spider", "http://localhost:${MINIO_PORT}/minio/health/live" ]
+      test: [ "CMD", "mc", "ready", "local" ]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   createbuckets:
     image: minio/mc
